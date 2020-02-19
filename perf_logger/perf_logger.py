@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 import os
 import time
 
+from pathlib import Path
+#print()
+
+
 def rand_str(n=16):
     return ''.join(list(np.random.choice(list('abcdefghijklmnopqrstuvwxyz'),size=n)))
 
@@ -36,7 +40,7 @@ class PerfLogger():
         
         #self.get_logger_name()
             
-        self.root = '/home/yqlai/.perf_logger/'
+        self.root = os.path.join(Path.home(),'.perf_logger/')
         
         self.log_path = os.path.join(self.root,self.prefix)
         if os.path.exists(self.log_path):
