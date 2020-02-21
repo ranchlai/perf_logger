@@ -1,3 +1,4 @@
+
 import json
 import time
 import glob
@@ -6,15 +7,27 @@ import matplotlib.pyplot as plt
 import os
 import time
 
+from pathlib import Path
+#print()
+
+
 def rand_str(n=16):
     return ''.join(list(np.random.choice(list('abcdefghijklmnopqrstuvwxyz'),size=n)))
 
-def get_file_name():
+def get_json_file():
     return get_time_str()+'.json'
+
+def get_msg_file():
+    return get_time_str()+'.log'
 
 def get_time_str():
     tm = time.localtime()
     return '{:4}-{:02}-{:02}-{:02}-{:02}-{:02}'.format(tm.tm_year,tm.tm_mon,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec)
+
+def get_time_str2():
+    tm = time.localtime()
+    return '{:4}-{:02}-{:02} {:02}:{:02}:{:02}'.format(tm.tm_year,tm.tm_mon,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec)
+
 
 def get_time_from_str(time_str):
     t = [int(s) for s in time_str.split('-')]
@@ -36,24 +49,43 @@ class PerfLogger():
         
         #self.get_logger_name()
             
-        self.root = '/home/yqlai/.perf_logger/'
+        self.root = os.path.join(Path.home(),'.perf_logger/')
         
         self.log_path = os.path.join(self.root,self.prefix)
         if os.path.exists(self.log_path):
             self.history_files = glob.glob(self.log_path+'/*.json')
+            self.history_msg_files = glob.glob(self.log_path+'/*.log')
             print('log history exists in '+self.log_path)
             
         else:            
             os.makedirs(self.log_path,exist_ok=True)
+	    self.history_files = []
+	    self.history_msg_files = []
         
         
-        self.current_log_file = os.path.join(self.log_path,get_file_name())
+        self.current_log_file = os.path.join(self.log_path,get_json_file())
+        self.msg_file = os.path.join(self.log_path,get_msg_file())      
+        
         self.current_pf_js = []
-    def log(self,train_acc, val_acc, train_loss,val_loss,epoch):
+    def log(self,epoch, train_acc, val_acc,train_loss=0,val_loss=0):
         js = [{'train_acc':train_acc,'val_acc':val_acc,'train_loss':train_loss,'val_loss':val_loss,'epoch':epoch}]
         self.current_pf_js += js
         with open(self.current_log_file,'wt') as fp:
-            json.dump(self.current_pf_js,fp)        
+            json.dump(self.current_pf_js,fp)      
+    def log_str(self,msg,stdout=True):
+        header = get_time_str2()        
+        try:
+            with open(self.msg_file,'at') as fp:
+                fp.write(header+' '+msg+'\n')
+            if stdout:
+                print(header+' '+msg+'\n')
+                
+        except:
+            raise(Exception('error in writing msg to log file '+self.msg_file))
+            
+        
+        
+    
         
     def get_history_log(self):
         js = []
@@ -79,6 +111,20 @@ class PerfLogger():
             plt.legend(leg)
         print(leg)
         plt.show()
+        
+    def list_all_files(self,):
+        print('index\tmsg-files')
+        print('-'*16)
+        for i, f in enumerate(self.history_msg_files):
+            print(i,'\t',f)
+        print('\n\n')
+        print('index\tlog-files')
+        print('-'*16)
+        
+        
+        for i, f in enumerate(self.history_files):
+            print(i,'\t',f)
+        
             
     
     def get_last_log(self):
